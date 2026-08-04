@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<style>
+  :root {
+    color-scheme: light;
+    --bg:#f2f5fa;
+    --card:#ffffff;
+    --border:#e2e8f0;
+    --text:#0f172a;
+    --muted:#64748b;
+    --primary:#0d6b6b;
+    --primary-dark:#0a5252;
+    --accent:#2563eb;
+    --danger:#dc2626;
+    --success:#16a34a;
+    --warning:#d97706;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0; padding: 0; height: 100%;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', Roboto, Arial, sans-serif;
+    overflow: hidden;
+  }
+  .page {
+    height: 100vh;
+    padding: 12px 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .header {
+    flex: 0 0 auto;
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .header h1 { margin: 0; font-size: 21px; font-weight: 800; color: var(--primary-dark); letter-spacing: -0.4px; }
+  .header .sub { margin: 1px 0 0; font-size: 11px; color: var(--muted); }
+  .clockbox { text-align: right; }
+  .clockbox .time { font-size: 18px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .clockbox .meta { font-size: 10px; color: var(--muted); margin-top: 1px; }
+  .badge-live { display:inline-block; width:7px; height:7px; border-radius:50%; background:var(--success); margin-right:5px; box-shadow:0 0 0 3px rgba(22,163,74,0.15); }
+
+  .banner {
+    display: none; flex: 0 0 auto;
+    background: #fef2f2; border: 1px solid #fecaca; color: #991b1b;
+    padding: 6px 12px; border-radius: 8px; font-size: 11px;
+  }
+  .banner.show { display: block; }
+
+  #app-top { flex: 0 0 auto; display: flex; flex-direction: column; gap: 8px; }
+
+  .mega-grid { display: grid; grid-template-columns: 1fr 300px; gap: 8px; }
+  .mega-left { display: flex; flex-direction: column; gap: 8px; }
+  .kpis-hero { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .row-secondary { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+  .kpi { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 12px; box-shadow: 0 1px 2px rgba(15,23,42,0.04); }
+  .kpi.hero { border: 1px solid #cfe3e3; background: linear-gradient(180deg, #ffffff 0%, #f2fbfa 100%); padding: 12px 14px; min-height: 78px; display: flex; flex-direction: column; justify-content: center; }
+  .kpi .label { font-size: 10.5px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 0.3px; }
+  .kpi.hero .label { color: var(--primary-dark); font-size: 11px; white-space: nowrap; }
+  .kpi .value { font-size: 24px; font-weight: 800; margin-top: 3px; color: var(--text); font-variant-numeric: tabular-nums; line-height: 1; }
+  .kpi.hero .value { font-size: 30px; }
+  .kpi .value.warn { color: var(--warning); }
+  .kpi .value.danger { color: var(--danger); }
+  .kpi .value.ok { color: var(--success); }
+  .kpi .foot { font-size: 9.5px; color: var(--muted); margin-top: 3px; }
+
+  .aguardando-card { display: flex; flex-direction: column; }
+  .split-box { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 8px; }
+  .split-col { background: #f8fafc; border: 1px solid var(--border); border-radius: 8px; padding: 10px 6px; text-align: center; }
+  .split-col.alert { background: #fef2f2; border-color: #fecaca; }
+  .split-col.alert .split-value { color: var(--danger); }
+  .split-value { font-size: 26px; font-weight: 800; font-variant-numeric: tabular-nums; line-height: 1; }
+  .split-label { font-size: 10px; color: var(--muted); font-weight: 600; margin-top: 3px; }
+
+  .mini-breakdown { margin-top: 10px; padding-top: 8px; border-top: 1px dashed var(--border); max-height: 300px; overflow-y: auto; }
+  .mini-title { font-size: 9.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; font-weight: 700; margin-bottom: 4px; }
+  .mini-row { display: flex; justify-content: space-between; font-size: 12px; color: var(--text); padding: 2px 0; }
+  .mini-row span:first-child { color: var(--muted); }
+  .mini-row span:last-child { font-weight: 700; }
+
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; height: 128px; }
+  .card { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 10px 14px; box-shadow: 0 1px 2px rgba(15,23,42,0.04); }
+  .card h2 { margin: 0 0 3px; font-size: 12.5px; font-weight: 700; color: var(--text); }
+  .card h2 .n { color: var(--muted); font-weight: 500; font-size: 10.5px; }
+  .chart-wrap { position: relative; height: 82px; }
+
+  .bottom-row { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 1fr 1.35fr; gap: 10px; }
+  .card.scroll-card { display: flex; flex-direction: column; overflow: hidden; }
+  .card.scroll-card h2 { flex: 0 0 auto; }
+  .card.scroll-card .scroll-body { flex: 1 1 auto; overflow-y: auto; min-height: 0; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 11.5px; }
+  th { text-align: left; color: var(--muted); font-weight: 700; font-size: 9.5px; text-transform: uppercase; padding: 3px 6px; border-bottom: 1px solid var(--border); position: sticky; top: 0; background: var(--card); }
+  td { padding: 4px 6px; border-bottom: 1px solid #f1f5f9; }
+  tr:last-child td { border-bottom: none; }
+  .rank-name { font-weight: 600; }
+
+  .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700; }
+  .empty-state { color: var(--muted); font-size: 11px; padding: 10px 0; text-align: center; }
+
+  .agenda-list { display: flex; flex-direction: column; gap: 6px; }
+  .agenda-item {
+    display: grid; grid-template-columns: 130px 90px 120px 1fr; align-items: center;
+    gap: 8px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: #fbfcfe;
+  }
+  .agenda-item.now { border-color: #99d6c8; background: #f0fbf8; }
+  .agenda-date { font-size: 11.5px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
+  .agenda-person { font-size: 11.5px; font-weight: 700; color: var(--primary-dark); }
+  .agenda-tipo { font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; text-align: center; white-space: nowrap; }
+  .agenda-tipo.viagem { background: #dbeafe; color: #1e40af; }
+  .agenda-tipo.treinamento { background: #ede9fe; color: #5b21b6; }
+  .agenda-desc { font-size: 11.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .agenda-now-badge { display: inline-block; font-size: 9px; font-weight: 800; color: #fff; background: var(--success); padding: 1px 6px; border-radius: 999px; margin-right: 5px; letter-spacing: 0.2px; }
+
+  .loading-overlay { display: flex; align-items: center; justify-content: center; padding: 40px 0; color: var(--muted); font-size: 13px; flex-direction: column; gap: 10px; }
+  .spinner { width: 24px; height: 24px; border-radius: 50%; border: 3px solid #e2e8f0; border-top-color: var(--primary); animation: spin 0.9s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+<div class="page">
+
+  <div class="header">
+    <div>
+      <h1>Painel RCC — Relacionamento com o Cliente</h1>
+      <p class="sub">Assessoria Científica &amp; Assistência Técnica · Grupo ONmnia</p>
+    </div>
+    <div class="clockbox">
+      <div class="time" id="clock">--:--:--</div>
+      <div class="meta"><span class="badge-live" id="live-dot"></span><span id="update-meta">carregando dados...</span></div>
+    </div>
+  </div>
+
+  <div class="banner" id="error-banner"></div>
+
+  <div id="app-top">
+    <div class="loading-overlay">
+      <div class="spinner"></div>
+      <div>Carregando dados do painel...</div>
+    </div>
+  </div>
+
+  <div class="bottom-row">
+    <div class="card scroll-card">
+      <h2>Equipe de atendimento</h2>
+      <div class="scroll-body" id="app-equipe"></div>
+    </div>
+    <div class="card scroll-card">
+      <h2>Agenda da equipe — viagens e treinamentos <span class="n">(atualizada manualmente)</span></h2>
+      <div class="scroll-body"><div id="agenda" class="agenda-list"></div></div>
+    </div>
+  </div>
+
+</div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
+  <script>
+  (function(){
+    const CSV_URL = 'chamados.csv'; // atualizado automaticamente pelo Power Automate, a cada 1 minuto
+    const REFRESH_MS = 60 * 1000; // 1 minuto
+
+    const PALETTE = ['#0d6b6b','#2563eb','#7c3aed','#d97706','#16a34a','#dc2626','#0891b2','#be185d','#4338ca','#65a30d'];
+    const TEAM_NAMES = ['Simone', 'Bárbara', 'Danielle', 'André', 'Leandro'];
+
+    // Agenda mantida manualmente — atualize esta lista quando houver novas viagens/treinamentos.
+    // Formato de data: 'AAAA-MM-DD'
+    const AGENDA_EVENTS = [
+      { start: '2026-08-03', end: '2026-08-07', pessoa: 'Leandro', tipo: 'Viagem', desc: 'Atendimento Uberlândia (Instalação e treinamento H100Plus) / Atendimento Araxá (Instalação e treinamento Uriconnect)' },
+      { start: '2026-08-03', end: '2026-08-07', pessoa: 'Mariana', tipo: 'Viagem', desc: 'Atendimento AFIP Carapicuíba/SP (Acompanhamento de validação)' },
+      { start: '2026-08-04', end: '2026-08-04', pessoa: 'Vitor', tipo: 'Treinamento Interno', desc: 'Treinamento Uriconnect' },
+      { start: '2026-08-04', end: '2026-08-04', pessoa: 'Bárbara', tipo: 'Treinamento Interno', desc: 'Treinamento HandGasmeter' },
+      { start: '2026-08-17', end: '2026-08-21', pessoa: 'Leandro', tipo: 'Viagem', desc: 'Treinamento técnico Olinda/PE (Treinamento Técnico completo da linha de equipamentos)' },
+      { start: '2026-08-17', end: '2026-08-21', pessoa: 'Danielle', tipo: 'Viagem', desc: 'Instalação e treinamento Imperatriz e Açailandia/MA (Instalação e treinamento bioquímica)' }
+    ];
+
+    let charts = {};
+    let lastGoodData = null;
+
+    function norm(s){ return (s||'').toString().normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim(); }
+
+    function excelToDate(serial){
+      if (serial === null || serial === undefined || isNaN(serial)) return null;
+      const utcDays = Math.floor(serial - 25569);
+      const utcValue = utcDays * 86400;
+      const dateInfo = new Date(utcValue * 1000);
+      const fractionalDay = serial - Math.floor(serial) + 0.0000001;
+      let totalSeconds = Math.floor(86400 * fractionalDay);
+      const seconds = totalSeconds % 60;
+      totalSeconds -= seconds;
+      const hours = Math.floor(totalSeconds / 3600);
+      const minutes = Math.floor(totalSeconds / 60) % 60;
+      return new Date(Date.UTC(dateInfo.getUTCFullYear(), dateInfo.getUTCMonth(), dateInfo.getUTCDate(), hours, minutes, seconds));
+    }
+
+    function parseCSV(text){
+      const rows = [];
+      let row = [], field = '', inQuotes = false;
+      for (let i = 0; i < text.length; i++){
+        const c = text[i];
+        if (inQuotes){
+          if (c === '"'){
+            if (text[i+1] === '"'){ field += '"'; i++; }
+            else { inQuotes = false; }
+          } else field += c;
+        } else {
+          if (c === '"') inQuotes = true;
+          else if (c === ',') { row.push(field); field = ''; }
+          else if (c === '\r') { /* skip */ }
+          else if (c === '\n') { row.push(field); rows.push(row); row = []; field = ''; }
+          else field += c;
+        }
+      }
+      if (field.length > 0 || row.length > 0){ row.push(field); rows.push(row); }
+      return rows.filter(r => r.length > 1 || (r.length === 1 && r[0] !== ''));
+    }
+
+    // fixed column layout of "CONTROLE DE CHAMADOS" export
+    const COL = {
+      DATA: 0, MES: 1, HORA: 2, CLIENTE: 3, CONTATO: 4, EMPRESA: 5, CLASSIFICACAO: 6,
+      TEMPO_ESPERA: 7, RESPONSAVEL: 8, DATA_INICIO: 9, HORA_INICIO: 10, EQUIPAMENTO: 11,
+      SERIAL: 12, STATUS: 13, DESCRICAO: 14, DATA_FECHAMENTO: 15, HORA_FECHAMENTO: 16,
+      RESOLUCAO: 17, FINALIZADO: 18, CONCLUSAO: 19, TEMPO_TOTAL: 20, QTD: 21
+    };
+
+    function toNum(v){ const n = parseFloat((v||'').toString().replace(',', '.')); return isNaN(n) ? null : n; }
+
+    function buildRecords(rows){
+      const records = [];
+      for (let i = 1; i < rows.length; i++){
+        const r = rows[i];
+        if (!r || r.length < 15) continue;
+        const dataSerial = toNum(r[COL.DATA]);
+        const horaSerial = toNum(r[COL.HORA]);
+        if (dataSerial === null) continue;
+        const opened = excelToDate(dataSerial + (horaSerial || 0));
+
+        const fechSerial = toNum(r[COL.DATA_FECHAMENTO]);
+        const fechHora = toNum(r[COL.HORA_FECHAMENTO]);
+        const closed = fechSerial !== null ? excelToDate(fechSerial + (fechHora || 0)) : null;
+
+        const finalizado = norm(r[COL.FINALIZADO]);
+        const dataInicioSerial = toNum(r[COL.DATA_INICIO]);
+        const horaInicioSerial = toNum(r[COL.HORA_INICIO]);
+        const iniciado = dataInicioSerial !== null && horaInicioSerial !== null;
+        records.push({
+          opened, closed,
+          empresa: (r[COL.EMPRESA] || 'N/D').trim() || 'N/D',
+          classificacao: (r[COL.CLASSIFICACAO] || 'N/D').trim() || 'N/D',
+          responsavel: (r[COL.RESPONSAVEL] || 'N/D').trim() || 'N/D',
+          cliente: (r[COL.CLIENTE] || '').trim(),
+          equipamento: (r[COL.EQUIPAMENTO] || '').trim(),
+          descricao: (r[COL.DESCRICAO] || '').trim(),
+          status: (r[COL.STATUS] || '').trim(),
+          conclusao: (r[COL.CONCLUSAO] || '').trim(),
+          finalizado: finalizado === 'SIM',
+          iniciado: iniciado,
+          esperaMin: toNum(r[COL.TEMPO_ESPERA]) !== null ? toNum(r[COL.TEMPO_ESPERA]) * 1440 : null,
+          atendMin: toNum(r[COL.TEMPO_TOTAL]) !== null ? toNum(r[COL.TEMPO_TOTAL]) * 1440 : null
+        });
+      }
+      return records;
+    }
+
+    function sameDay(a, b){
+      return a && b && a.getUTCFullYear() === b.getUTCFullYear() && a.getUTCMonth() === b.getUTCMonth() && a.getUTCDate() === b.getUTCDate();
+    }
+
+    function fmtMin(m){
+      if (m === null || m === undefined || isNaN(m)) return '—';
+      if (m < 60) return Math.round(m) + ' min';
+      const h = Math.floor(m/60), mm = Math.round(m%60);
+      return h + 'h ' + mm + 'min';
+    }
+
+    function computeAndRender(records){
+      const now = new Date();
+      const total = records.length;
+      const open = records.filter(r => !r.finalizado);
+      const aguardando = open.filter(r => !r.iniciado);
+      const todays = records.filter(r => r.opened && sameDay(r.opened, now));
+      const monthRecs = records.filter(r => r.opened && r.opened.getUTCFullYear() === now.getUTCFullYear() && r.opened.getUTCMonth() === now.getUTCMonth());
+      const closedWithTimes = monthRecs.filter(r => r.iniciado && r.esperaMin !== null && r.esperaMin >= 0 && r.esperaMin < 1440);
+      const resolutionRate = monthRecs.length ? (monthRecs.filter(r=>r.finalizado).length / monthRecs.length * 100) : null;
+
+      const avgEspera = closedWithTimes.length ? closedWithTimes.reduce((s,r)=>s+r.esperaMin,0) / closedWithTimes.length : null;
+
+      function groupCount(arr, key){
+        const m = {};
+        arr.forEach(r => { const k = r[key] || 'N/D'; m[k] = (m[k]||0) + 1; });
+        return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+      }
+
+      const byClass = groupCount(monthRecs, 'classificacao');
+      const aguardandoByClass = groupCount(aguardando, 'classificacao');
+
+      function daysAgo(date){
+        if (!date) return null;
+        const d1 = Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate());
+        const d0 = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+        return Math.round((d0 - d1) / 86400000);
+      }
+      const aguardandoRecente = aguardando.filter(r => { const da = daysAgo(r.opened); return da !== null && da <= 1; });
+      const aguardandoAntigo = aguardando.filter(r => { const da = daysAgo(r.opened); return da !== null && da >= 2; });
+      const aguardandoAntigoByClass = groupCount(aguardandoAntigo, 'classificacao');
+
+      // last 14 business days trend (weekends excluded)
+      const days = [];
+      let cursor = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+      while (days.length < 14){
+        const dow = cursor.getUTCDay();
+        if (dow !== 0 && dow !== 6) days.unshift(cursor);
+        cursor = new Date(cursor.getTime() - 86400000);
+      }
+      const trendCounts = days.map(d => records.filter(r => r.opened && sameDay(r.opened, d)).length);
+      const trendLabels = days.map(d => String(d.getUTCDate()).padStart(2,'0') + '/' + String(d.getUTCMonth()+1).padStart(2,'0'));
+
+      const teamStats = TEAM_NAMES.map(name => {
+        const key = norm(name);
+        const mine = records.filter(r => norm(r.responsavel) === key);
+        const hoje = mine.filter(r => r.opened && sameDay(r.opened, now)).length;
+        const mes = mine.filter(r => r.opened && r.opened.getUTCFullYear() === now.getUTCFullYear() && r.opened.getUTCMonth() === now.getUTCMonth()).length;
+        const abertoAno = mine.filter(r => !r.finalizado && r.opened && r.opened.getUTCFullYear() === now.getUTCFullYear()).length;
+        return { name, hoje, mes, abertoAno };
+      });
+
+      renderDOM({
+        total, openCount: open.length, aguardandoCount: aguardando.length, aguardandoByClass,
+        aguardandoRecenteCount: aguardandoRecente.length, aguardandoAntigoCount: aguardandoAntigo.length, aguardandoAntigoByClass,
+        todayCount: todays.length, monthCount: monthRecs.length,
+        avgEspera, resolutionRate, byClass,
+        trendLabels, trendCounts, teamStats
+      });
+    }
+
+    function escapeHtml(s){ return (s||'').toString().replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+    function renderDOM(d){
+      const appTop = document.getElementById('app-top');
+      appTop.innerHTML = `
+        <div class="mega-grid">
+          <div class="mega-left">
+            <div class="kpis-hero">
+              <div class="kpi hero"><div class="label">Chamados hoje</div><div class="value">${d.todayCount}</div><div class="foot">abertos na data de hoje</div></div>
+              <div class="kpi hero"><div class="label">Chamados no mês</div><div class="value">${d.monthCount}</div><div class="foot">total acumulado do mês</div></div>
+              <div class="kpi hero"><div class="label">Espera média (mês)</div><div class="value">${fmtMin(d.avgEspera)}</div><div class="foot">até o início do atendimento</div></div>
+            </div>
+            <div class="row-secondary">
+              <div class="kpi"><div class="label">Em aberto</div><div class="value ${d.openCount > 0 ? 'warn' : 'ok'}">${d.openCount}</div><div class="foot">aguardando finalização</div></div>
+              <div class="kpi"><div class="label">Taxa de resolução</div><div class="value ${d.resolutionRate!==null && d.resolutionRate<80?'warn':'ok'}">${d.resolutionRate!==null ? d.resolutionRate.toFixed(0)+'%' : '—'}</div><div class="foot">finalizados no mês</div></div>
+            </div>
+            <div class="charts-row">
+              <div class="card">
+                <h2>Chamados por classificação <span class="n">(mês · ${d.monthCount})</span></h2>
+                <div class="chart-wrap"><canvas id="chart-class"></canvas></div>
+              </div>
+              <div class="card">
+                <h2>Tendência — 14 dias úteis</h2>
+                <div class="chart-wrap"><canvas id="chart-trend"></canvas></div>
+              </div>
+            </div>
+          </div>
+          <div class="kpi aguardando-card">
+            <div class="label">Aguardando atendimento <span style="font-weight:700;color:var(--text);">(${d.aguardandoCount})</span></div>
+            <div class="split-box">
+              <div class="split-col">
+                <div class="split-value">${d.aguardandoRecenteCount}</div>
+                <div class="split-label">Hoje e ontem</div>
+              </div>
+              <div class="split-col ${d.aguardandoAntigoCount > 0 ? 'alert' : ''}">
+                <div class="split-value">${d.aguardandoAntigoCount}</div>
+                <div class="split-label">2 dias ou mais</div>
+              </div>
+            </div>
+            ${d.aguardandoAntigoByClass.length ? `<div class="mini-breakdown">
+              <div class="mini-title">Detalhamento — 2 dias ou mais</div>
+              ${d.aguardandoAntigoByClass.map(([name,count]) => `<div class="mini-row"><span>${escapeHtml(name)}</span><span>${count}</span></div>`).join('')}
+            </div>` : ''}
+          </div>
+        </div>
+      `;
+
+      document.getElementById('app-equipe').innerHTML = d.teamStats.length ? `<table><thead><tr><th>Atendente</th><th style="text-align:right;">Hoje</th><th style="text-align:right;">Mês</th><th style="text-align:right;">Aberto (ano)</th></tr></thead><tbody>
+          ${d.teamStats.map(t => `<tr><td class="rank-name">${escapeHtml(t.name)}</td><td style="text-align:right;font-weight:700;">${t.hoje}</td><td style="text-align:right;">${t.mes}</td><td style="text-align:right;${t.abertoAno>0?'color:var(--warning);font-weight:700;':''}">${t.abertoAno}</td></tr>`).join('')}
+        </tbody></table>` : `<div class="empty-state">Sem dados suficientes.</div>`;
+
+      drawCharts(d);
+    }
+
+    function drawCharts(d){
+      Object.values(charts).forEach(c => c && c.destroy());
+      charts = {};
+
+      const classCtx = document.getElementById('chart-class');
+      if (classCtx){
+        charts.classe = new Chart(classCtx, {
+          type: 'pie',
+          data: {
+            labels: d.byClass.map(x=>x[0]),
+            datasets: [{ data: d.byClass.map(x=>x[1]), backgroundColor: d.byClass.map((x,i) => PALETTE[i % PALETTE.length]) }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 10 } } } }
+          }
+        });
+      }
+
+      const trendCtx = document.getElementById('chart-trend');
+      if (trendCtx){
+        charts.trend = new Chart(trendCtx, {
+          type: 'line',
+          data: {
+            labels: d.trendLabels,
+            datasets: [{ data: d.trendCounts, borderColor: PALETTE[0], backgroundColor: 'rgba(13,107,107,0.12)', fill: true, tension: 0.3, pointRadius: 2 }]
+          },
+          options: {
+            responsive: true, maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: { y: { beginAtZero: true, ticks: { precision: 0, font: { size: 9 } } }, x: { ticks: { font: { size: 9 } } } }
+          }
+        });
+      }
+    }
+
+    function showError(msg){
+      const b = document.getElementById('error-banner');
+      b.textContent = '⚠ ' + msg + ' — exibindo os últimos dados carregados com sucesso.';
+      b.classList.add('show');
+    }
+    function hideError(){
+      document.getElementById('error-banner').classList.remove('show');
+    }
+
+    async function refresh(){
+      try {
+        document.getElementById('live-dot').style.background = '#d97706';
+        const resp = await fetch(CSV_URL + '?t=' + Date.now(), { cache: 'no-store' });
+        if (!resp.ok) throw new Error('Não foi possível buscar o arquivo (HTTP ' + resp.status + ').');
+        const text = await resp.text();
+        if (!text || text.length < 50) throw new Error('Arquivo retornado vazio.');
+        const rows = parseCSV(text);
+        const records = buildRecords(rows);
+        if (!records.length) throw new Error('Não foi possível interpretar as linhas do arquivo.');
+
+        lastGoodData = { records };
+        hideError();
+        computeAndRender(records);
+
+        document.getElementById('update-meta').textContent = 'Atualizado às ' + new Date().toLocaleTimeString('pt-BR');
+        document.getElementById('live-dot').style.background = '#16a34a';
+      } catch (err) {
+        console.error(err);
+        showError((err && err.message) ? err.message : 'Falha ao atualizar os dados.');
+        document.getElementById('live-dot').style.background = '#dc2626';
+        if (lastGoodData){
+          computeAndRender(lastGoodData.records);
+          document.getElementById('update-meta').textContent = 'Mostrando os últimos dados carregados com sucesso.';
+        } else {
+          document.getElementById('app-top').innerHTML = '<div class="empty-state" style="padding:40px 0;">Não foi possível carregar os dados do chamados.csv ainda.</div>';
+        }
+      }
+    }
+
+    function tickClock(){
+      const now = new Date();
+      document.getElementById('clock').textContent = now.toLocaleTimeString('pt-BR');
+    }
+
+    function parseYMD(s){
+      const [y,m,d] = s.split('-').map(Number);
+      return new Date(Date.UTC(y, m-1, d));
+    }
+
+    function fmtAgendaDate(startStr, endStr){
+      const s = parseYMD(startStr), e = parseYMD(endStr);
+      const dd = n => String(n).padStart(2,'0');
+      const sTxt = dd(s.getUTCDate()) + '/' + dd(s.getUTCMonth()+1);
+      if (startStr === endStr) return sTxt;
+      const eTxt = dd(e.getUTCDate()) + '/' + dd(e.getUTCMonth()+1);
+      return sTxt + ' – ' + eTxt;
+    }
+
+    function renderAgenda(){
+      const el = document.getElementById('agenda');
+      if (!el) return;
+      const now = new Date();
+      const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+
+      const upcoming = AGENDA_EVENTS
+        .filter(ev => parseYMD(ev.end).getTime() >= todayUTC)
+        .sort((a,b) => parseYMD(a.start) - parseYMD(b.start));
+
+      if (!upcoming.length){
+        el.innerHTML = '<div class="empty-state">Nenhuma viagem ou treinamento agendado no momento.</div>';
+        return;
+      }
+
+      el.innerHTML = upcoming.map(ev => {
+        const isNow = todayUTC >= parseYMD(ev.start).getTime() && todayUTC <= parseYMD(ev.end).getTime();
+        const tipoClass = /treinamento interno/i.test(ev.tipo) ? 'treinamento' : 'viagem';
+        return `<div class="agenda-item ${isNow ? 'now' : ''}">
+          <div class="agenda-date">${isNow ? '<span class="agenda-now-badge">AGORA</span>' : ''}${fmtAgendaDate(ev.start, ev.end)}</div>
+          <div class="agenda-person">${escapeHtml(ev.pessoa)}</div>
+          <div class="agenda-tipo ${tipoClass}">${escapeHtml(ev.tipo)}</div>
+          <div class="agenda-desc" title="${escapeHtml(ev.desc)}">${escapeHtml(ev.desc)}</div>
+        </div>`;
+      }).join('');
+    }
+
+    setInterval(tickClock, 1000);
+    tickClock();
+    renderAgenda();
+    setInterval(renderAgenda, 60 * 1000);
+    refresh();
+    setInterval(refresh, REFRESH_MS);
+  })();
+  </script>
+</body>
+</html>

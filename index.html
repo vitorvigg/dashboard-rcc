@@ -89,7 +89,7 @@
   .card h2 .n { color: var(--muted); font-weight: 500; font-size: 10.5px; }
   .chart-wrap { position: relative; height: 82px; }
 
-  .bottom-row { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 1fr 1.35fr; gap: 10px; }
+  .bottom-row { flex: 1 1 auto; min-height: 0; display: grid; grid-template-columns: 240px 1fr; gap: 10px; }
   .card.scroll-card { display: flex; flex-direction: column; overflow: hidden; }
   .card.scroll-card h2 { flex: 0 0 auto; }
   .card.scroll-card .scroll-body { flex: 1 1 auto; overflow-y: auto; min-height: 0; }
@@ -103,19 +103,29 @@
   .pill { display:inline-block; padding:2px 8px; border-radius:999px; font-size:11px; font-weight:700; }
   .empty-state { color: var(--muted); font-size: 11px; padding: 10px 0; text-align: center; }
 
-  .agenda-list { display: flex; flex-direction: column; gap: 6px; }
-  .agenda-item {
-    display: grid; grid-template-columns: 130px 90px 120px 1fr; align-items: center;
-    gap: 8px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 8px; background: #fbfcfe;
-  }
-  .agenda-item.now { border-color: #99d6c8; background: #f0fbf8; }
-  .agenda-date { font-size: 11.5px; font-weight: 700; color: var(--text); font-variant-numeric: tabular-nums; }
-  .agenda-person { font-size: 11.5px; font-weight: 700; color: var(--primary-dark); }
-  .agenda-tipo { font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; text-align: center; white-space: nowrap; }
-  .agenda-tipo.viagem { background: #dbeafe; color: #1e40af; }
-  .agenda-tipo.treinamento { background: #ede9fe; color: #5b21b6; }
-  .agenda-desc { font-size: 11.5px; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .agenda-now-badge { display: inline-block; font-size: 9px; font-weight: 800; color: #fff; background: var(--success); padding: 1px 6px; border-radius: 999px; margin-right: 5px; letter-spacing: 0.2px; }
+  /* ===== Agenda da equipe — linha do tempo por pessoa (Opção A) ===== */
+  .gantt { display: grid; grid-template-columns: 128px 1fr; gap: 0; }
+  .gantt-days { display: grid; grid-template-columns: repeat(21, 1fr); }
+  .gday { text-align: center; font-size: 10px; color: var(--muted); font-weight: 700; padding: 0 2px 6px; border-bottom: 1px solid var(--border); }
+  .gday.weekend { color: var(--warning); }
+  .gday.today { color: var(--primary-dark); }
+  .gname { font-size: 12px; font-weight: 700; color: var(--text); display: flex; align-items: center; padding: 8px 10px 8px 0; border-bottom: 1px solid #f1f5f9; }
+  .gtrack { position: relative; display: grid; grid-template-columns: repeat(21, 1fr); border-bottom: 1px solid #f1f5f9; min-height: 34px; }
+  .gcell { border-left: 1px solid #f8fafc; }
+  .gcell.weekend { background: #f8fafc; }
+  .gcell.today { background: #f0fbf8; }
+  .gbar { position: absolute; top: 5px; bottom: 5px; border-radius: 6px; font-size: 10.5px; font-weight: 700; display: flex; align-items: center; padding: 0 8px; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+  .gbar.viagem { background: #dbeafe; color: #1e40af; }
+  .gbar.treinamento { background: #ede9fe; color: #5b21b6; }
+
+  .pendentes-block { margin-top: 12px; padding-top: 10px; border-top: 1px dashed var(--border); }
+  .pendentes-title { font-size: 9.5px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.3px; font-weight: 700; margin-bottom: 6px; }
+  .pend-list { display: flex; flex-direction: column; gap: 5px; }
+  .pend-item { display: grid; grid-template-columns: 108px 150px 1fr 130px; align-items: center; gap: 8px; padding: 6px 10px; border: 1px dashed #fcd34d; border-radius: 7px; background: #fffbeb; font-size: 11.5px; }
+  .pend-tipo { font-size: 9.5px; font-weight: 700; padding: 2px 7px; border-radius: 999px; text-align: center; white-space: nowrap; background: #fef3c7; color: #92400e; }
+  .pend-local { font-weight: 700; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pend-desc { color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .pend-meta { font-size: 10px; color: var(--muted); text-align: right; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
   .loading-overlay { display: flex; align-items: center; justify-content: center; padding: 40px 0; color: var(--muted); font-size: 13px; flex-direction: column; gap: 10px; }
   .spinner { width: 24px; height: 24px; border-radius: 50%; border: 3px solid #e2e8f0; border-top-color: var(--primary); animation: spin 0.9s linear infinite; }
@@ -151,8 +161,14 @@
       <div class="scroll-body" id="app-equipe"></div>
     </div>
     <div class="card scroll-card">
-      <h2>Agenda da equipe — viagens e treinamentos <span class="n">(atualizada manualmente)</span></h2>
-      <div class="scroll-body"><div id="agenda" class="agenda-list"></div></div>
+      <h2>Agenda da equipe — viagens e treinamentos <span class="n">(atualizada via planilha)</span></h2>
+      <div class="scroll-body">
+        <div id="gantt" class="gantt"></div>
+        <div class="pendentes-block">
+          <div class="pendentes-title">Pendentes de definição</div>
+          <div id="pendentes-list" class="pend-list"></div>
+        </div>
+      </div>
     </div>
   </div>
 
@@ -161,25 +177,18 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.0/dist/chart.umd.js" integrity="sha384-iU8HYtnGQ8Cy4zl7gbNMOhsDTTKX02BTXptVP/vqAWIaTfM7isw76iyZCsjL2eVi" crossorigin="anonymous"></script>
   <script>
   (function(){
-    const CSV_URL = 'chamados.csv'; // atualizado automaticamente pelo Power Automate, a cada 1 minuto
-    const REFRESH_MS = 60 * 1000; // 1 minuto
+    const CSV_URL = 'chamados.csv'; // atualizado automaticamente pelo Power Automate, a cada 2 minutos
+    const AGENDA_URL = 'agenda.csv'; // aba "Viagens e Treinamentos" da planilha CONTROLE DE CHAMADOS - 2026.xlsx
+    const REFRESH_MS = 2 * 60 * 1000; // 2 minutos
+    const AGENDA_WINDOW_DAYS = 21;
 
     const PALETTE = ['#0d6b6b','#2563eb','#7c3aed','#d97706','#16a34a','#dc2626','#0891b2','#be185d','#4338ca','#65a30d'];
     const TEAM_NAMES = ['Simone', 'Bárbara', 'Danielle', 'André', 'Leandro'];
 
-    // Agenda mantida manualmente — atualize esta lista quando houver novas viagens/treinamentos.
-    // Formato de data: 'AAAA-MM-DD'
-    const AGENDA_EVENTS = [
-      { start: '2026-08-03', end: '2026-08-07', pessoa: 'Leandro', tipo: 'Viagem', desc: 'Atendimento Uberlândia (Instalação e treinamento H100Plus) / Atendimento Araxá (Instalação e treinamento Uriconnect)' },
-      { start: '2026-08-03', end: '2026-08-07', pessoa: 'Mariana', tipo: 'Viagem', desc: 'Atendimento AFIP Carapicuíba/SP (Acompanhamento de validação)' },
-      { start: '2026-08-04', end: '2026-08-04', pessoa: 'Vitor', tipo: 'Treinamento Interno', desc: 'Treinamento Uriconnect' },
-      { start: '2026-08-04', end: '2026-08-04', pessoa: 'Bárbara', tipo: 'Treinamento Interno', desc: 'Treinamento HandGasmeter' },
-      { start: '2026-08-17', end: '2026-08-21', pessoa: 'Leandro', tipo: 'Viagem', desc: 'Treinamento técnico Olinda/PE (Treinamento Técnico completo da linha de equipamentos)' },
-      { start: '2026-08-17', end: '2026-08-21', pessoa: 'Danielle', tipo: 'Viagem', desc: 'Instalação e treinamento Imperatriz e Açailandia/MA (Instalação e treinamento bioquímica)' }
-    ];
-
     let charts = {};
     let lastGoodData = null;
+    let lastGoodAgenda = null;
+    let lastGoodPendente = null;
 
     function norm(s){ return (s||'').toString().normalize('NFD').replace(/[̀-ͯ]/g,'').toUpperCase().trim(); }
 
@@ -195,6 +204,20 @@
       const hours = Math.floor(totalSeconds / 3600);
       const minutes = Math.floor(totalSeconds / 60) % 60;
       return new Date(Date.UTC(dateInfo.getUTCFullYear(), dateInfo.getUTCMonth(), dateInfo.getUTCDate(), hours, minutes, seconds));
+    }
+
+    // aceita serial do Excel (ex.: 46247), DD/MM/AAAA ou AAAA-MM-DD — cobre tanto
+    // exportação de célula-texto quanto de célula-data feita pelo Power Automate
+    function parseFlexibleDate(v){
+      if (v === null || v === undefined) return null;
+      const s = v.toString().trim();
+      if (!s) return null;
+      if (/^\d+(\.\d+)?$/.test(s)) return excelToDate(parseFloat(s));
+      let m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+      if (m) return new Date(Date.UTC(+m[3], +m[2]-1, +m[1]));
+      m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+      if (m) return new Date(Date.UTC(+m[1], +m[2]-1, +m[3]));
+      return null;
     }
 
     function parseCSV(text){
@@ -226,6 +249,10 @@
       SERIAL: 12, STATUS: 13, DESCRICAO: 14, DATA_FECHAMENTO: 15, HORA_FECHAMENTO: 16,
       RESOLUCAO: 17, FINALIZADO: 18, CONCLUSAO: 19, TEMPO_TOTAL: 20, QTD: 21
     };
+
+    // colunas da aba "Viagens e Treinamentos" (agenda.csv): Tipo, Colaborador, Data Início, Data Fim, Local/Cliente, Descrição
+    // uma linha é "confirmada" quando tem Colaborador E Data Início preenchidos; caso contrário é tratada como pendente.
+    const COL_AGENDA = { TIPO: 0, COLABORADOR: 1, DATA_INICIO: 2, DATA_FIM: 3, LOCAL: 4, DESCRICAO: 5 };
 
     function toNum(v){ const n = parseFloat((v||'').toString().replace(',', '.')); return isNaN(n) ? null : n; }
 
@@ -264,6 +291,31 @@
         });
       }
       return records;
+    }
+
+    // Lê a aba única "Viagens e Treinamentos" e separa em duas listas:
+    // confirmados (Colaborador + Data Início preenchidos) e pendentes (falta um dos dois).
+    function buildAgendaRecords(rows){
+      const confirmados = [], pendentes = [];
+      for (let i = 1; i < rows.length; i++){
+        const r = rows[i];
+        if (!r || r.length < 2) continue;
+        const tipo = (r[COL_AGENDA.TIPO] || '').trim();
+        const colaborador = (r[COL_AGENDA.COLABORADOR] || '').trim();
+        const start = parseFlexibleDate(r[COL_AGENDA.DATA_INICIO]);
+        const end = parseFlexibleDate(r[COL_AGENDA.DATA_FIM]) || start;
+        const local = (r[COL_AGENDA.LOCAL] || '').trim();
+        const desc = (r[COL_AGENDA.DESCRICAO] || '').trim();
+        if (!tipo && !colaborador && !local && !desc) continue; // linha vazia
+
+        if (colaborador && start){
+          const fullDesc = local ? (desc ? local + ' — ' + desc : local) : desc;
+          confirmados.push({ pessoa: colaborador, tipo: tipo || 'Viagem', start, end, desc: fullDesc });
+        } else {
+          pendentes.push({ tipo: tipo || 'Viagem', local, desc, colaborador, dataPrevista: start });
+        }
+      }
+      return { confirmados, pendentes };
     }
 
     function sameDay(a, b){
@@ -476,51 +528,101 @@
       document.getElementById('clock').textContent = now.toLocaleTimeString('pt-BR');
     }
 
-    function parseYMD(s){
-      const [y,m,d] = s.split('-').map(Number);
-      return new Date(Date.UTC(y, m-1, d));
-    }
+    function ymd(y,m,d){ return new Date(Date.UTC(y,m-1,d)); }
+    function addDays(d,n){ return new Date(d.getTime()+n*86400000); }
+    function isWeekend(d){ const dow = d.getUTCDay(); return dow===0 || dow===6; }
+    function tipoClass(t){ return /treinamento/i.test(t) ? 'treinamento' : 'viagem'; }
+    function fmtDD(d){ return String(d.getUTCDate()).padStart(2,'0') + '/' + String(d.getUTCMonth()+1).padStart(2,'0'); }
 
-    function fmtAgendaDate(startStr, endStr){
-      const s = parseYMD(startStr), e = parseYMD(endStr);
-      const dd = n => String(n).padStart(2,'0');
-      const sTxt = dd(s.getUTCDate()) + '/' + dd(s.getUTCMonth()+1);
-      if (startStr === endStr) return sTxt;
-      const eTxt = dd(e.getUTCDate()) + '/' + dd(e.getUTCMonth()+1);
-      return sTxt + ' – ' + eTxt;
-    }
-
-    function renderAgenda(){
-      const el = document.getElementById('agenda');
+    function renderGantt(events){
+      const el = document.getElementById('gantt');
       if (!el) return;
       const now = new Date();
-      const todayUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate());
+      const today = ymd(now.getUTCFullYear(), now.getUTCMonth()+1, now.getUTCDate());
+      const todayTime = today.getTime();
 
-      const upcoming = AGENDA_EVENTS
-        .filter(ev => parseYMD(ev.end).getTime() >= todayUTC)
-        .sort((a,b) => parseYMD(a.start) - parseYMD(b.start));
+      const upcoming = (events || []).filter(e => e.end.getTime() >= todayTime);
 
       if (!upcoming.length){
         el.innerHTML = '<div class="empty-state">Nenhuma viagem ou treinamento agendado no momento.</div>';
         return;
       }
 
-      el.innerHTML = upcoming.map(ev => {
-        const isNow = todayUTC >= parseYMD(ev.start).getTime() && todayUTC <= parseYMD(ev.end).getTime();
-        const tipoClass = /treinamento interno/i.test(ev.tipo) ? 'treinamento' : 'viagem';
-        return `<div class="agenda-item ${isNow ? 'now' : ''}">
-          <div class="agenda-date">${isNow ? '<span class="agenda-now-badge">AGORA</span>' : ''}${fmtAgendaDate(ev.start, ev.end)}</div>
-          <div class="agenda-person">${escapeHtml(ev.pessoa)}</div>
-          <div class="agenda-tipo ${tipoClass}">${escapeHtml(ev.tipo)}</div>
-          <div class="agenda-desc" title="${escapeHtml(ev.desc)}">${escapeHtml(ev.desc)}</div>
+      function clampIdx(d){
+        const diff = Math.round((d.getTime()-todayTime)/86400000);
+        return Math.max(0, Math.min(AGENDA_WINDOW_DAYS-1, diff));
+      }
+
+      const days = Array.from({length: AGENDA_WINDOW_DAYS}, (_,i) => addDays(today, i));
+      const people = Array.from(new Set(upcoming.map(e => e.pessoa)));
+
+      let html = '<div></div><div class="gantt-days">';
+      days.forEach(d => {
+        const cls = ['gday']; if (isWeekend(d)) cls.push('weekend'); if (d.getTime()===todayTime) cls.push('today');
+        html += '<div class="'+cls.join(' ')+'">'+fmtDD(d)+'</div>';
+      });
+      html += '</div>';
+
+      people.forEach(p => {
+        html += '<div class="gname">'+escapeHtml(p)+'</div><div class="gtrack">';
+        days.forEach(d => {
+          const cls = ['gcell']; if (isWeekend(d)) cls.push('weekend'); if (d.getTime()===todayTime) cls.push('today');
+          html += '<div class="'+cls.join(' ')+'"></div>';
+        });
+        upcoming.filter(e => e.pessoa === p).forEach(e => {
+          const s = clampIdx(e.start), en = clampIdx(e.end);
+          const left = (s/AGENDA_WINDOW_DAYS*100)+'%', width = (((en-s+1)/AGENDA_WINDOW_DAYS)*100)+'%';
+          html += '<div class="gbar '+tipoClass(e.tipo)+'" style="left:'+left+';width:'+width+';" title="'+escapeHtml(e.desc)+'">'+escapeHtml(e.desc)+'</div>';
+        });
+        html += '</div>';
+      });
+
+      el.innerHTML = html;
+    }
+
+    function renderPendentes(items){
+      const el = document.getElementById('pendentes-list');
+      if (!el) return;
+      if (!items || !items.length){
+        el.innerHTML = '<div class="empty-state">Nenhum agendamento pendente de definição.</div>';
+        return;
+      }
+      el.innerHTML = items.map(p => {
+        const metaParts = [];
+        if (p.colaborador) metaParts.push(escapeHtml(p.colaborador));
+        if (p.dataPrevista) metaParts.push(fmtDD(p.dataPrevista));
+        const meta = metaParts.length ? metaParts.join(' · ') : 'A definir';
+        return `<div class="pend-item">
+          <div class="pend-tipo">${escapeHtml(p.tipo)}</div>
+          <div class="pend-local" title="${escapeHtml(p.local)}">${escapeHtml(p.local || '—')}</div>
+          <div class="pend-desc" title="${escapeHtml(p.desc)}">${escapeHtml(p.desc)}</div>
+          <div class="pend-meta">${meta}</div>
         </div>`;
       }).join('');
     }
 
+    async function refreshAgenda(){
+      try {
+        const resp = await fetch(AGENDA_URL + '?t=' + Date.now(), { cache: 'no-store' });
+        if (!resp.ok) throw new Error('HTTP ' + resp.status);
+        const text = await resp.text();
+        const rows = parseCSV(text);
+        const { confirmados, pendentes } = buildAgendaRecords(rows);
+        lastGoodAgenda = confirmados;
+        lastGoodPendente = pendentes;
+        renderGantt(confirmados);
+        renderPendentes(pendentes);
+      } catch (err) {
+        console.error('agenda.csv:', err);
+        renderGantt(lastGoodAgenda || []);
+        renderPendentes(lastGoodPendente || []);
+      }
+    }
+
     setInterval(tickClock, 1000);
     tickClock();
-    renderAgenda();
-    setInterval(renderAgenda, 60 * 1000);
+    refreshAgenda();
+    setInterval(refreshAgenda, REFRESH_MS);
     refresh();
     setInterval(refresh, REFRESH_MS);
   })();

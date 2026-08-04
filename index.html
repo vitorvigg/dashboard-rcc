@@ -306,6 +306,7 @@
       }
       const aguardandoRecente = aguardando.filter(r => { const da = daysAgo(r.opened); return da !== null && da <= 1; });
       const aguardandoAntigo = aguardando.filter(r => { const da = daysAgo(r.opened); return da !== null && da >= 2; });
+      const aguardandoRecenteByClass = groupCount(aguardandoRecente, 'classificacao');
       const aguardandoAntigoByClass = groupCount(aguardandoAntigo, 'classificacao');
 
       // last 14 business days trend (weekends excluded)
@@ -330,7 +331,7 @@
 
       renderDOM({
         total, openCount: open.length, aguardandoCount: aguardando.length, aguardandoByClass,
-        aguardandoRecenteCount: aguardandoRecente.length, aguardandoAntigoCount: aguardandoAntigo.length, aguardandoAntigoByClass,
+        aguardandoRecenteCount: aguardandoRecente.length, aguardandoAntigoCount: aguardandoAntigo.length, aguardandoRecenteByClass, aguardandoAntigoByClass,
         todayCount: todays.length, monthCount: monthRecs.length,
         avgEspera, resolutionRate, byClass,
         trendLabels, trendCounts, teamStats
@@ -376,6 +377,10 @@
                 <div class="split-label">2 dias ou mais</div>
               </div>
             </div>
+            ${d.aguardandoRecenteByClass.length ? `<div class="mini-breakdown">
+              <div class="mini-title">Detalhamento — Hoje</div>
+              ${d.aguardandoRecenteByClass.map(([name,count]) => `<div class="mini-row"><span>${escapeHtml(name)}</span><span>${count}</span></div>`).join('')}
+            </div>` : ''}
             ${d.aguardandoAntigoByClass.length ? `<div class="mini-breakdown">
               <div class="mini-title">Detalhamento — 2 dias ou mais</div>
               ${d.aguardandoAntigoByClass.map(([name,count]) => `<div class="mini-row"><span>${escapeHtml(name)}</span><span>${count}</span></div>`).join('')}
